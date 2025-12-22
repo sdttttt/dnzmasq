@@ -32,4 +32,16 @@ pub fn parseByte2DnsQuestion(packet: []const u8, out_question: *DnsQuestion) !vo
     var name_buf: [255]u8 = undefined;
     var name_len: usize = 0;
     var jumps: usize = 0;
+
+    while (offset < packet.len and jumps < 10) {
+        const label_len = packet[offset];
+        offset += 1;
+
+        if (label_len == 0) break;
+
+        if ((label_len & 0b1100_0000) != 0) {
+            // 压缩指针
+
+        }
+    }
 }
