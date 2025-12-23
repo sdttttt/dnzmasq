@@ -25,7 +25,7 @@ pub const QType = enum(u16) {
 };
 
 pub const DnsQuestion = struct {
-    name: [255]u8,
-    name_len: u8,
+    domain: [255]u8,
+    domain_len: u8,
     qtype: QType,
 };

@@ -83,5 +83,11 @@ pub fn parseByte2DnsQuestion(packet: []const u8, out_question: *DnsQuestion) !vo
 
     if (offset + 2 > packet.len) return error.MissingQType;
     const qtype_raw = @as(u16, @byteSwap(@as(*const u16, @ptrFromInt(&packet[offset])).*));
-    const qtype = @enumFromInt(qtype_raw) catch QType.A;
+    const qtype = @as(QType, @enumFromInt(qtype_raw)) catch QType.A;
+
+    out_question.* = DnsQuestion{
+        .domain = domain_buf,
+        .domain_len = domain_len,
+        .qtype = qtype,
+    };
 }
