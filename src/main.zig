@@ -1,8 +1,7 @@
 const std = @import("std");
-const dnz = @import("dnz");
+const net = std.Io.net;
 
 pub fn main() !void {
     // Prints to stderr, ignoring potential errors.
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
-    try dnz.bufferedPrint();
+    std.debug.print("welcome using DNZmasq.\n", .{});
 }
