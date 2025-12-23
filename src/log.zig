@@ -1,7 +1,8 @@
 const std = @import("std");
+const net = std.Io.net;
 const DnsQuestion = @import("dns.zig");
 
-fn logQuery(client_addr: std.net.Address, question: *const DnsQuestion) void {
+pub fn logQuery(client_addr: net.IpAddress, question: *const DnsQuestion) void {
     // 手动拼接字符串，避免 fmt.allocPrint
     const name_slice = question.name[0..question.name_len];
     const type_str = switch (question.qtype) {
