@@ -18,11 +18,15 @@ const QType = dns.QType;
 //|   Additional (AR)   |  ← 可变（可选）
 //+---------------------+
 
-pub fn parseByte2DnsQuestion(packet: []const u8, out_question: *DnsQuestion) !void {
+pub fn parseByte2DnsQuestion(packet: *const []u8, out_question: *DnsQuestion) !void {
     if (packet.len < @sizeOf(DnsHeader)) return error.PacketTooShort;
 
+    const packet_data = packet.*;
+    const packet_data_ptr: [*]const u8 = @ptrCast(packet_data);
+
     // 解析到结构体
-    const header = @as(*align(1) const DnsHeader, @ptrFromInt(packet.ptr)).*;
+    const header_ptr: *align(1) const DnsHeader = @ptrCast(packet_data_ptr);
+    const header = header_ptr.*;
 
     if (header.qdcount == 0) return error.NoQuestions;
 
