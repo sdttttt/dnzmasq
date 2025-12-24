@@ -29,7 +29,7 @@ pub fn main() !void {
         const packet = revc.data;
 
         var question: DnsQuestion = undefined;
-        if (dns_parser.parseByte2DnsQuestion(&packet, &question)) |_| {
+        if (dns_parser.parseByte2DnsQuestion(packet, &question)) |_| {
             log.logQuery(revc.from, &question);
         } else |_| {
             continue;

@@ -18,24 +18,24 @@ const QType = dns.QType;
 //|   Additional (AR)   |  ← 可变（可选）
 //+---------------------+
 
-pub fn parseByte2DnsQuestion(packet: *const []u8, out_question: *DnsQuestion) !void {
+pub fn parseByte2DnsQuestion(packet: []const u8, out_question: *DnsQuestion) !void {
     if (packet.len < @sizeOf(DnsHeader)) return error.PacketTooShort;
 
-    const packet_data = packet.*;
-    const packet_data_ptr: [*]const u8 = @ptrCast(packet_data);
+    const packet_ptr = packet.ptr;
 
     // 解析到结构体
-    const header_ptr: *align(1) const DnsHeader = @ptrCast(packet_data_ptr);
+    const header_ptr: *align(1) const DnsHeader = @ptrCast(packet_ptr);
     const header = header_ptr.*;
 
     if (header.qdcount == 0) return error.NoQuestions;
 
     // 解析question部分结构
     // 第一个字节就是域名长度
-    var offset = @sizeOf(DnsHeader);
+    var offset: usize = @sizeOf(DnsHeader);
 
+    // 域名缓冲区长度
     var domain_buf: [255]u8 = undefined;
-    var domain_len: usize = 0;
+    var domain_len: u8 = 0;
     var jumps: usize = 0; // DNS请求包存在压缩指针攻击的情况，jumps位限定压缩指针跳转次数
 
     // 域名解析
@@ -86,8 +86,13 @@ pub fn parseByte2DnsQuestion(packet: *const []u8, out_question: *DnsQuestion) !v
     }
 
     if (offset + 2 > packet.len) return error.MissingQType;
-    const qtype_raw = @as(u16, @byteSwap(@as(*const u16, @ptrFromInt(&packet[offset])).*));
-    const qtype = @as(QType, @enumFromInt(qtype_raw)) catch QType.A;
+
+    // 转换指针类型
+    const qtype_raw_ptr: *align(1) const u16 = @ptrCast(&packet[offset]);
+    // 解引用
+    const qtype_raw = @as(u16, @byteSwap(qtype_raw_ptr.*));
+
+    const qtype: QType = @enumFromInt(qtype_raw);
 
     out_question.* = DnsQuestion{
         .domain = domain_buf,
