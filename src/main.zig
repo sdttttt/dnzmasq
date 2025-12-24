@@ -1,7 +1,6 @@
 const std = @import("std");
 const dns_parser = @import("dns_parser.zig");
 const dns = @import("dns.zig");
-const log = @import("log.zig");
 
 const net = std.Io.net;
 
@@ -30,7 +29,7 @@ pub fn main() !void {
 
         var question: DnsQuestion = undefined;
         if (dns_parser.parseByte2DnsQuestion(packet, &question)) |_| {
-            log.logQuery(revc.from, &question);
+            std.debug.print("dns coming...", .{});
         } else |_| {
             continue;
         }
