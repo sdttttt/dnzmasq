@@ -27,11 +27,13 @@ pub fn main() !void {
         const revc = sock.receive(sio, &recv_buf) catch continue;
         const packet = revc.data;
 
-        var question: DnsQuestion = undefined;
-        if (dns_parser.parseByte2DnsQuestion(packet, &question)) |_| {
-            std.debug.print("dns coming...", .{});
-        } else |_| {
-            continue;
-        }
+        _ = sio.async(handlePacket, .{packet});
     }
+}
+
+fn handlePacket(packet: []const u8) void {
+    var question: DnsQuestion = undefined;
+    if (dns_parser.parseByte2DnsQuestion(packet, &question)) |_| {
+        std.debug.print("dns coming...", .{});
+    } else |_| {}
 }
