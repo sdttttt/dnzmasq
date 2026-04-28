@@ -1,1 +1,5 @@
-等待 zig 0.16 发布之后再完善后续功能。
+# dnzmasq
+
+> Warning: This project is experimental.
+
+Single-threaded zero-allocation DNS forwarder.

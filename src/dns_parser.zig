@@ -5,6 +5,19 @@ const DnsQuestion = dns.DnsQuestion;
 const DnsHeader = dns.DnsHeader;
 const QType = dns.QType;
 
+pub const ParseError = error{
+    PacketTooShort,
+    NoQuestions,
+    InvalidPoint,
+    InvalidLabel,
+    Truncated,
+    NameTooLong,
+    MissingQType,
+    MissingQClass,
+    InvalidResponse,
+    BufferTooSmall,
+};
+
 // DNS 报文格式 RFC 1035
 //+---------------------+
 //|        Header       |  ← 固定 12 字节
@@ -99,4 +112,42 @@ pub fn parseByte2DnsQuestion(packet: []const u8, out_question: *DnsQuestion) !vo
         .domain_len = domain_len,
         .qtype = qtype,
     };
+}
+
+/// encodeName 将点分域名编码为 DNS 格式
+/// 输入: "www.example.com"
+/// 输出: [3] 'w' 'w' 'w' [7] 'e' 'x' 'a' 'm' 'p' 'l' 'e' [3] 'c' 'o' 'm' [0]
+pub fn encodeName(domain: []const u8, buf: []u8) !usize {
+    var domain_seg = std.mem.splitAny(u8, domain, ".");
+    var buf_offset = 0;
+    while (domain_seg.next()) |segment| {
+        const seg_len = segment.len;
+        if (seg_len > 63) return error.NameTooLong;
+        if (buf_offset + 1 + seg_len > buf.len) return error.NameTooLong;
+
+        buf[buf_offset] = @as(u8, seg_len);
+        buf_offset += 1;
+
+        @memcpy(buf[buf_offset..][0..seg_len], segment);
+        buf_offset += seg_len;
+    }
+
+    buf[buf_offset] = 0; // end
+
+    return buf_offset;
+}
+
+/// buildResponse 构建 DNS 响应
+/// 将查询包转换为一个基本的响应（只设置 QR=1, AA=1）
+pub fn buildResponse(query: []const u8, buf: []u8) !usize {
+    if (query.len < @sizeOf(DnsHeader)) return error.PacketTooShort;
+    if (buf.len < query.len) return error.BufferTooSmall;
+
+    @memcpy(buf[0..query.len], query);
+
+    const header_ptr: *align(1) DnsHeader = @ptrCast(buf.ptr);
+    header_ptr.flags = std.mem.readInt(u16, query[2..4], .big);
+    header_ptr.flags |= 0b1000_0000_0000_0000; // 设置QR=1
+
+    return query.len;
 }

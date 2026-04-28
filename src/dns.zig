@@ -1,3 +1,8 @@
+pub const CLASS_IN: u16 = 1;
+pub const DNS_PORT: u16 = 53;
+pub const MAX_DNS_NAME_LEN: u16 = 255;
+
+// DnsHeader 头
 pub const DnsHeader = packed struct {
     id: u16,
     flags: u16,
@@ -28,4 +33,21 @@ pub const DnsQuestion = struct {
     domain: [255]u8,
     domain_len: u8,
     qtype: QType,
+};
+
+pub const DnsRecord = struct {
+    name: []const u8,
+    qtype: QType,
+    class: u16,
+    ttl: u32,
+    rdlen: u16,
+    rdata: []const u8,
+};
+
+pub const DnsMessage = struct {
+    header: DnsHeader,
+    questions: []DnsQuestion,
+    answers: []DnsRecord,
+    authorities: []DnsRecord,
+    additionals: []DnsRecord,
 };

@@ -4,7 +4,7 @@ const DnsQuestion = @import("dns.zig");
 
 pub fn logQuery(client_addr: net.IpAddress, question: *const DnsQuestion) void {
     // 手动拼接字符串，避免 fmt.allocPrint
-    const name_slice = question.name[0..question.name_len];
+    const name_slice = question.domain[0..question.domain_len];
     const type_str = switch (question.qtype) {
         .A => "A",
         .AAAA => "AAAA",
@@ -14,24 +14,30 @@ pub fn logQuery(client_addr: net.IpAddress, question: *const DnsQuestion) void {
         else => "OTHER",
     };
 
-    // 写入 stderr（路由器通常重定向到 syslog）
-    const prefix = "DNS QUERY: ";
-    _ = std.os.write(std.io.tty_stderr_fileno, prefix) catch {};
+    std.debug.print("DNS QUERY: {} -> {s} ({s})\n", .{
+        client_addr,
+        name_slice,
+        type_str,
+    });
 
-    // 打印客户端 IP
-    var ip_buf: [16]u8 = undefined;
-    const ip_str = client_addr.address.toString(ip_buf[0..]);
-    _ = std.os.write(std.io.tty_stderr_fileno, ip_str) catch {};
+    return;
+}
 
-    const sep = " -> ";
-    _ = std.os.write(std.io.tty_stderr_fileno, sep) catch {};
+pub fn logResponse(client_addr: net.IpAddress, question: *const DnsQuestion, answer_count: u16) void {
+    const name_slice = question.domain[0..question.domain_len];
+    const type_str = switch (question.qtype) {
+        .A => "A",
+        .AAAA => "AAAA",
+        .CNAME => "CNAME",
+        .TXT => "TXT",
+        .MX => "MX",
+        else => "OTHER",
+    };
 
-    // 打印域名
-    _ = std.os.write(std.io.tty_stderr_fileno, name_slice) catch {};
-
-    const space = " (";
-    _ = std.os.write(std.io.tty_stderr_fileno, space) catch {};
-    _ = std.os.write(std.io.tty_stderr_fileno, type_str) catch {};
-    const close = ")\n";
-    _ = std.os.write(std.io.tty_stderr_fileno, close) catch {};
+    std.debug.print("DNS RESPONSE: {} -> {s} ({s}), answers: {}\n", .{
+        client_addr,
+        name_slice,
+        type_str,
+        answer_count,
+    });
 }
