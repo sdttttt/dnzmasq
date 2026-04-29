@@ -1,6 +1,7 @@
 const std = @import("std");
 const dns_parser = @import("dns_parser.zig");
 const dns = @import("dns.zig");
+const config = @import("config.zig");
 
 const net = std.Io.net;
 
