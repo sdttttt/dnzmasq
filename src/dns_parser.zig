@@ -51,6 +51,10 @@ pub fn parseByte2DnsQuestion(packet: []const u8, out_question: *DnsQuestion) !vo
     var domain_len: u8 = 0;
     var jumps: usize = 0; // DNS请求包存在压缩指针攻击的情况，jumps位限定压缩指针跳转次数
 
+    // 防止循环指针
+    var visited: [8]usize = undefined;
+    var visited_count: usize = 0;
+
     // 域名解析
     while (offset < packet.len and jumps < 8) {
         // 域名结构大抵是这样的：
@@ -70,8 +74,17 @@ pub fn parseByte2DnsQuestion(packet: []const u8, out_question: *DnsQuestion) !vo
             // 占2字节，高2位固定11
             // 后14字节为偏移地址
             if (offset >= packet.len) return error.InvalidPoint;
-            // 取出2字节，去掉高2位
+            // 第一个字节去掉高2位11, 压缩指针固有标识, 然后移动到u16高位
+            // 第二个字节填充到u16低位
             const ptr = (@as(u16, (label_len & 0b0011_1111)) << 8) | @as(u16, packet[offset]);
+
+            for (visited[0..visited_count]) |prve| {
+                if (prve == offset) return error.CircularPointer;
+            }
+
+            visited[visited_count] = ptr;
+            visited_count += 1;
+
             offset = @intCast(ptr);
             jumps += 1;
             continue;
